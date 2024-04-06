@@ -5,6 +5,8 @@ const fs = require("fs");
 const url = require("url");
 const fsPromises = require("fs").promises;
 const querystring = require("querystring");
+const sql = require("mysql2");
+const config = require("./dbConfig");
 
 const { login, register } = require("./userAuthentication");
 const {
@@ -43,6 +45,14 @@ const reqToQuery = async (req) => {
 const server = http.createServer(async (req, res) => {
   log(req.url, req.method);
 
+  const pool = sql.createPool(config);
+  pool.query("SELECT * FROM Users", (error, results, fields) => {
+    if (error) {
+      log(error);
+    }
+    log(results);
+  });
+
   const extension = path.extname(req.url);
   const { pathname } = url.parse(req.url);
   log(extension);
@@ -79,17 +89,25 @@ const server = http.createServer(async (req, res) => {
     const query = await reqToQuery(req);
     const { name, username, email, password } = querystring.parse(query);
     if (serverSideRegisterValidation(name, username, email, password)) {
-      await register(req, res);
+      await register(name, username, email, password, pool);
       serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
     } else {
-      serveFile(path.join(__dirname, "views", "register.html"), "text/html", res);
+      serveFile(
+        path.join(__dirname, "views", "register.html"),
+        "text/html",
+        res
+      );
     }
     log(name, username, email, password);
   } else if (pathname === "/login" && req.method === "POST") {
-    await login(req, res);
     const query = await reqToQuery(req);
     const { email, password } = querystring.parse(query);
-    log(email, password);
+    if (serverSideLoginValidation(email, password)) {
+      await login(email, password, pool);
+      serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
+    } else {
+      serveFile(path.join(__dirname, "views", "login.html"), "text/html", res);
+    }
   } else if (fs.existsSync(filePath)) {
     serveFile(filePath, contentType, res);
   } else {
