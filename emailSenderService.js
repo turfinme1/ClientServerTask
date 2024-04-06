@@ -6,16 +6,26 @@ const client = new MailtrapClient({
 
 const sender = { name: "Mailtrap", email: "info@demomailtrap.com" };
 
-const sendEmail = (emailReceiver, content) => {
-  client
-    .send({
+const sendEmail = async (emailReceiver, content) => {
+  try {
+    await client.send({
       from: sender,
       to: [{ email: `zzzturfzzz@gmail.com` }],
       subject: "Confirmation of email",
-      text: `Please confirm your email by clicking the link below ${content}: https://localhost:3000/confirm/abc123xyz456`,
-    })
-    .then(console.log)
-    .catch(console.error);
+      text: `Please confirm your email by clicking the link below : http://localhost:3000/confirm?validationToken=${content}`,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  // client
+  //   .send({
+  //     from: sender,
+  //     to: [{ email: `zzzturfzzz@gmail.com` }],
+  //     subject: "Confirmation of email",
+  //     text: `Please confirm your email by clicking the link below : http://localhost:3000/confirm/${content}`,
+  //   })
+  //   .then(console.log)
+  //   .catch(console.error);
 };
 
 exports.sendEmail = sendEmail;
