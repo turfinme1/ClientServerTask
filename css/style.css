@@ -1,0 +1,11 @@
+.input-control.success input {
+    border-color: #12de67;
+}
+
+.input-control.error input {
+    border-color: #a11a0b;
+}
+
+.input-control.error .error{
+    color: #a11a0b;
+}
