@@ -7,6 +7,7 @@ const fsPromises = require("fs").promises;
 const querystring = require("querystring");
 const sql = require("mysql2");
 const config = require("./dbConfig");
+const { sendEmail } = require("./emailSenderService");
 
 const { login, register } = require("./userAuthentication");
 const {
@@ -44,7 +45,7 @@ const reqToQuery = async (req) => {
 
 const server = http.createServer(async (req, res) => {
   log(req.url, req.method);
-
+  // sendEmail();
   const pool = sql.createPool(config);
   pool.query("SELECT * FROM Users", (error, results, fields) => {
     if (error) {
