@@ -9,7 +9,13 @@ const sql = require("mysql2");
 const config = require("./dbConfig");
 const { sendEmail } = require("./emailSenderService");
 
-const { login, register } = require("./userAuthentication");
+const {
+  login,
+  register,
+  tryVerifyEmail,
+  getToken,
+  setValidationTokenInDB,
+} = require("./userAuthentication");
 const {
   serverSideLoginValidation,
   serverSideRegisterValidation,
@@ -45,14 +51,8 @@ const reqToQuery = async (req) => {
 
 const server = http.createServer(async (req, res) => {
   log(req.url, req.method);
-  // sendEmail();
+
   const pool = sql.createPool(config);
-  pool.query("SELECT * FROM Users", (error, results, fields) => {
-    if (error) {
-      log(error);
-    }
-    log(results);
-  });
 
   const extension = path.extname(req.url);
   const { pathname } = url.parse(req.url);
@@ -91,6 +91,9 @@ const server = http.createServer(async (req, res) => {
     const { name, username, email, password } = querystring.parse(query);
     if (serverSideRegisterValidation(name, username, email, password)) {
       await register(name, username, email, password, pool);
+      const validationToken = getToken();
+      await setValidationTokenInDB(email, validationToken, pool);
+      await sendEmail(email, validationToken);
       serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
     } else {
       serveFile(
@@ -109,6 +112,11 @@ const server = http.createServer(async (req, res) => {
     } else {
       serveFile(path.join(__dirname, "views", "login.html"), "text/html", res);
     }
+  } else if (pathname.includes("/confirm")) {
+    const { query } = url.parse(req.url);
+    const { validationToken } = querystring.parse(query);
+    await tryVerifyEmail(validationToken, pool);
+    serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
   } else if (fs.existsSync(filePath)) {
     serveFile(filePath, contentType, res);
   } else {

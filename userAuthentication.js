@@ -1,3 +1,6 @@
+const { sendEmail } = require("./emailSenderService");
+const { v4: uuidv4 } = require("uuid");
+
 const register = async (name, username, email, password, pool) => {
   pool.getConnection((error, connection) => {
     if (error) {
@@ -22,23 +25,96 @@ const login = async (email, password, pool) => {
   pool.getConnection((error, connection) => {
     if (error) {
       console.log(error);
-      return;
+      throw error;
     }
 
     connection.query(
       `SELECT * FROM users WHERE email = '${email}' AND password = '${password}';`,
-      (err, results, fields) => {
+      async (err, results, fields) => {
         connection.release();
-
         if (err) {
           console.log(err);
-        }
+        } else if (results.length === 1) {
+          const token = getToken();
 
+          await setSessionTokenInDB(email, token, pool);
+        }
         console.log(results);
       }
     );
   });
 };
 
+const tryVerifyEmail = async (validationToken, pool) => {
+  pool.getConnection((error, connection) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    connection.query(
+      `UPDATE users SET isValidated = true WHERE validationToken = '${validationToken}';`,
+      (err, results, fields) => {
+        connection.release();
+
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+  });
+};
+
+const getToken = () => {
+  return uuidv4();
+};
+
+const setValidationTokenInDB = async (email, validationToken, pool) => {
+  pool.getConnection((error, connection) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    connection.query(
+      `UPDATE users SET validationToken = '${validationToken}' WHERE email = '${email}';`,
+      (err, results, fields) => {
+        connection.release();
+
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+  });
+};
+
+const setSessionTokenInDB = async (email, token, pool) => {
+  pool.getConnection((error, connection) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    connection.query(
+      `UPDATE users SET token = '${token}' WHERE email = '${email}';`,
+      (err, results, fields) => {
+        connection.release();
+
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+  });
+};
+
+const sendValidationEmail = async (email, validationToken) => {
+  sendEmail(email, validationToken);
+};
+
 exports.register = register;
 exports.login = login;
+exports.getToken = getToken;
+exports.tryVerifyEmail = tryVerifyEmail;
+exports.setValidationTokenInDB = setValidationTokenInDB;
