@@ -1,20 +1,21 @@
-const http = require("http");
-const path = require("path");
-const { log } = require("console");
 const fs = require("fs");
 const url = require("url");
+const http = require("http");
 const fsPromises = require("fs").promises;
 const querystring = require("querystring");
-const sql = require("mysql2");
+const { log } = require("console");
+const path = require("path");
+const sql = require("mysql2/promise");
+
 const config = require("./dbConfig");
 const { sendEmail } = require("./emailSenderService");
-
 const {
   login,
   register,
   tryVerifyEmail,
   getToken,
   setValidationTokenInDB,
+  setSessionTokenInDB,
 } = require("./userAuthentication");
 const {
   serverSideLoginValidation,
@@ -89,11 +90,10 @@ const server = http.createServer(async (req, res) => {
   if (pathname === "/register" && req.method === "POST") {
     const query = await reqToQuery(req);
     const { name, username, email, password } = querystring.parse(query);
+
     if (serverSideRegisterValidation(name, username, email, password)) {
-      await register(name, username, email, password, pool);
-      const validationToken = getToken();
-      await setValidationTokenInDB(email, validationToken, pool);
-      await sendEmail(email, validationToken);
+      await registerHandler(name, username, email, password, pool);
+
       serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
     } else {
       serveFile(
@@ -107,40 +107,73 @@ const server = http.createServer(async (req, res) => {
     const query = await reqToQuery(req);
     const { email, password } = querystring.parse(query);
     if (serverSideLoginValidation(email, password)) {
-      const sessionToken = await login(email, password, pool);
-      if (sessionToken) {
+      const sessionToken = getToken();
+
+      const isLoginSuccess = await loginHandler(
+        email,
+        password,
+        sessionToken,
+        pool
+      );
+
+      if (isLoginSuccess) {
         res.writeHead(200, {
           "Content-Type": "application/json",
         });
+
         res.end(JSON.stringify({ sessionToken: sessionToken }));
       } else {
         res.writeHead(401, {
           "Content-Type": "application/json",
         });
+
         res.end(
           JSON.stringify({
             message: "Invalid email or password",
           })
         );
       }
-
-      // serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
     } else {
       serveFile(path.join(__dirname, "views", "login.html"), "text/html", res);
     }
   } else if (pathname.includes("/confirm")) {
     const { query } = url.parse(req.url);
     const { validationToken } = querystring.parse(query);
+
     await tryVerifyEmail(validationToken, pool);
-    serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
+
+    await serveFile(
+      path.join(__dirname, "views", "index.html"),
+      "text/html",
+      res
+    );
   } else if (fs.existsSync(filePath)) {
-    serveFile(filePath, contentType, res);
+    await serveFile(filePath, contentType, res);
   } else {
     log(path.parse(filePath));
-    serveFile(path.join(__dirname, "views", "404.html"), "text/html", res);
+    await serveFile(
+      path.join(__dirname, "views", "404.html"),
+      "text/html",
+      res
+    );
   }
 });
 
 server.listen(PORT, () => log(`Server running on port ${PORT}`));
 
-// await serverFile
+const registerHandler = async (name, username, email, password, pool) => {
+  await register(name, username, email, password, pool);
+  const validationToken = getToken();
+  await setValidationTokenInDB(email, validationToken, pool);
+  await sendEmail(email, validationToken);
+};
+
+const loginHandler = async (email, password, sessionToken, pool) => {
+  const isLoginSuccess = await login(email, password, pool);
+
+  if (isLoginSuccess) {
+    await setSessionTokenInDB(email, sessionToken, pool);
+  }
+
+  return isLoginSuccess;
+};
