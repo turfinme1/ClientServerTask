@@ -6,7 +6,25 @@ form.addEventListener("submit", (e) => {
   e.preventDefault();
 
   if (validateInputs()) {
-    form.submit();
+    // form.submit();
+    fetch("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(new FormData(form)).toString(),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Invalid email or password");
+        }
+        return res.json();
+      })
+      .then((res) => {
+        sessionStorage.setItem("sessionToken", res.sessionToken);
+        window.location.href = "/";
+      })
+      .catch((err) => console.log(err));
   }
 });
 
@@ -15,16 +33,14 @@ const validateInputs = () => {
   const passwordValue = password.value.trim();
 
   let isValid = true;
-  
+
   if (emailValue === "") {
     setInputError(email, "Email is required");
     isValid = false;
-  } 
-  else if (!isValidEmail(emailValue)) {
+  } else if (!isValidEmail(emailValue)) {
     setInputError(email, "Email is not valid");
     isValid = false;
-  }
-  else {
+  } else {
     setInputSuccess(email);
   }
 
@@ -59,4 +75,4 @@ const setInputSuccess = (element) => {
 const isValidEmail = (email) => {
   const re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
   return re.test(String(email).toLowerCase());
-}
+};

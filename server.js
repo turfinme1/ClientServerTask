@@ -107,8 +107,24 @@ const server = http.createServer(async (req, res) => {
     const query = await reqToQuery(req);
     const { email, password } = querystring.parse(query);
     if (serverSideLoginValidation(email, password)) {
-      await login(email, password, pool);
-      serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
+      const sessionToken = await login(email, password, pool);
+      if (sessionToken) {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+        });
+        res.end(JSON.stringify({ sessionToken: sessionToken }));
+      } else {
+        res.writeHead(401, {
+          "Content-Type": "application/json",
+        });
+        res.end(
+          JSON.stringify({
+            message: "Invalid email or password",
+          })
+        );
+      }
+
+      // serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
     } else {
       serveFile(path.join(__dirname, "views", "login.html"), "text/html", res);
     }

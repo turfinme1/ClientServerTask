@@ -22,6 +22,8 @@ const register = async (name, username, email, password, pool) => {
 };
 
 const login = async (email, password, pool) => {
+  let token = getToken();
+
   pool.getConnection((error, connection) => {
     if (error) {
       console.log(error);
@@ -34,15 +36,18 @@ const login = async (email, password, pool) => {
         connection.release();
         if (err) {
           console.log(err);
+          token = null;
         } else if (results.length === 1) {
-          const token = getToken();
-
           await setSessionTokenInDB(email, token, pool);
+        } else {
+          token = null;
         }
         console.log(results);
       }
     );
   });
+
+  return token;
 };
 
 const tryVerifyEmail = async (validationToken, pool) => {
