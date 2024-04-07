@@ -34,3 +34,5 @@ const isValidEmail = (email) => {
 
 exports.serverSideLoginValidation = serverSideLoginValidation;
 exports.serverSideRegisterValidation = serverSideRegisterValidation;
+exports.isValidEmail = isValidEmail;
+
