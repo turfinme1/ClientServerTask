@@ -2,72 +2,48 @@ const { sendEmail } = require("./emailSenderService");
 const { v4: uuidv4 } = require("uuid");
 
 const register = async (name, username, email, password, pool) => {
-  pool.getConnection((error, connection) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    connection.query(
-      `INSERT INTO users (user_id,name,username,email,password,isValidated) VALUES (null,'${name}' ,'${username}','${email}','${password}',false);`,
-      (err, results, fields) => {
-        connection.release();
-
-        if (err) {
-          console.log(err);
-        }
-      }
+  let isRegisterSuccess = false;
+  try {
+    const [rows, fields] = await pool.query(
+      `INSERT INTO users (user_id,name,username,email,password,isValidated) VALUES (null,'${name}' ,'${username}','${email}','${password}',false);`
     );
-  });
+    console.log(rows);
+    isRegisterSuccess = true;
+  } catch (error) {
+    console.log(error);
+  }
+  return isRegisterSuccess;
+
 };
 
 const login = async (email, password, pool) => {
-  let token = getToken();
+  let isLoginSuccess = false;
 
-  pool.getConnection((error, connection) => {
-    if (error) {
-      console.log(error);
-      throw error;
-    }
-
-    connection.query(
-      `SELECT * FROM users WHERE email = '${email}' AND password = '${password}';`,
-      async (err, results, fields) => {
-        connection.release();
-        if (err) {
-          console.log(err);
-          token = null;
-        } else if (results.length === 1) {
-          await setSessionTokenInDB(email, token, pool);
-        } else {
-          token = null;
-        }
-        console.log(results);
-      }
+  try {
+    const [rows, fields] = await pool.query(
+      `SELECT * FROM users WHERE email = '${email}' AND password = '${password}';`
     );
-  });
+    console.log(rows);
+    if (rows.length === 1) {
+      isLoginSuccess = true;
+    }
+  } catch (error) {
+    log(error);
+  }
 
-  return token;
+  return isLoginSuccess;
 };
 
 const tryVerifyEmail = async (validationToken, pool) => {
-  pool.getConnection((error, connection) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    connection.query(
-      `UPDATE users SET isValidated = true WHERE validationToken = '${validationToken}';`,
-      (err, results, fields) => {
-        connection.release();
-
-        if (err) {
-          console.log(err);
-        }
-      }
+  try {
+    const [rows, fields] = await pool.query(
+      `UPDATE users SET isValidated = true WHERE validationToken = '${validationToken}';`
     );
-  });
+    console.log(rows);
+  } catch (error) {
+    console.log(error);
+  }
+
 };
 
 const getToken = () => {
@@ -75,47 +51,30 @@ const getToken = () => {
 };
 
 const setValidationTokenInDB = async (email, validationToken, pool) => {
-  pool.getConnection((error, connection) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    connection.query(
-      `UPDATE users SET validationToken = '${validationToken}' WHERE email = '${email}';`,
-      (err, results, fields) => {
-        connection.release();
-
-        if (err) {
-          console.log(err);
-        }
-      }
+  try {
+    const [rows, fields] = await pool.query(
+      `UPDATE users SET validationToken = '${validationToken}' WHERE email = '${email}';`
     );
-  });
+    console.log(rows);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const setSessionTokenInDB = async (email, token, pool) => {
-  pool.getConnection((error, connection) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-
-    connection.query(
-      `UPDATE users SET token = '${token}' WHERE email = '${email}';`,
-      (err, results, fields) => {
-        connection.release();
-
-        if (err) {
-          console.log(err);
-        }
-      }
+  try {
+    const [rows, fields] = await pool.query(
+      `UPDATE users SET token = '${token}' WHERE email = '${email}';`
     );
-  });
+    console.log(rows);
+    console.log("Updated token");
+  } catch (error) {
+    console.log(error);
+  }
 };
 
-const sendValidationEmail = async (email, validationToken) => {
-  sendEmail(email, validationToken);
+const sendValidationEmail = async (emailReceiver, validationToken) => {
+  sendEmail(emailReceiver, validationToken);
 };
 
 exports.register = register;
@@ -123,3 +82,4 @@ exports.login = login;
 exports.getToken = getToken;
 exports.tryVerifyEmail = tryVerifyEmail;
 exports.setValidationTokenInDB = setValidationTokenInDB;
+exports.setSessionTokenInDB = setSessionTokenInDB;
