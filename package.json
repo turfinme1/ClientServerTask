@@ -5,11 +5,13 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "testServer": "nodemon refactorServer.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.1.0"
   },
   "dependencies": {
