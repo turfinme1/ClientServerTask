@@ -16,10 +16,7 @@ class UserService {
           email,
           validationToken
         );
-        await this.sendEmail(
-          email,
-          validationToken
-        );
+        await this.sendEmail(email, validationToken);
       }
     } catch (error) {
       console.log(error);
@@ -49,7 +46,16 @@ class UserService {
   };
 
   verifyEmail = async (validationToken) => {
-    await this.userRepository.tryVerifyEmail(validationToken);
+    try {
+      if (
+        (await this.userRepository.tryVerifyEmail(validationToken)) === false
+      ) {
+        throw new Error("Could not verify email.");
+      }
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   };
 
   #getToken = () => {
