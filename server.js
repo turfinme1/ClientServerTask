@@ -6,16 +6,16 @@ const path = require("path");
 const sql = require("mysql2/promise");
 
 const config = require("./dbConfig");
-const { sendEmail } = require("./services/emailSenderService");
-const { UserRepository } = require("./repository/userRepository.js");
-const { UserService } = require("./services/userService.js");
-const { routes } = require("./routes/userRoute.js");
+const { sendEmail } = require("./src/services/emailSenderService");
+const { UserRepository } = require("./src/repository/userRepository.js");
+const { UserService } = require("./src/services/userService.js");
+const { routes } = require("./src/routes/userRoute.js");
 const {
   reqToQuery,
   serveFile,
   getFilePath,
   getContentType,
-} = require("./util/requestUtil.js");
+} = require("./src/util/requestUtil.js");
 
 const PORT = process.env.PORT || 3000;
 
@@ -32,7 +32,7 @@ const server = http.createServer(async (req, res) => {
 
   const contentType = getContentType(extension);
   const filePath = getFilePath(contentType, req.url, extension);
-
+  console.log(filePath);
   const allRoutes = {
     ...userRoutes,
 
