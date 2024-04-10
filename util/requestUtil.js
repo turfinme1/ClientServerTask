@@ -32,11 +32,11 @@ const getFilePath = (contentType, reqUrl, extension) => {
   let filePath;
 
   if (contentType === "text/html" && reqUrl === "/") {
-    filePath = path.join(__dirname, '..', "views", "index.html");
+    filePath = path.join(__dirname, "..", "views", "index.html");
   } else if (contentType === "text/html") {
-    filePath = path.join(__dirname,'..', "views", reqUrl);
+    filePath = path.join(__dirname, "..", "views", reqUrl);
   } else {
-    filePath = path.join(__dirname, '..', reqUrl);
+    filePath = path.join(__dirname, "..", reqUrl);
   }
 
   if (!extension && reqUrl.slice(-1) !== "/") {
@@ -44,7 +44,7 @@ const getFilePath = (contentType, reqUrl, extension) => {
   }
 
   return filePath;
-}
+};
 
 const getContentType = (extension) => {
   let contentType;
@@ -64,9 +64,22 @@ const getContentType = (extension) => {
   }
 
   return contentType;
-}
+};
+
+const createResponse = (res, statusCode, message) => {
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json",
+  });
+
+  return res.end(
+    JSON.stringify({
+      message,
+    })
+  );
+};
 
 exports.reqToQuery = reqToQuery;
 exports.serveFile = serveFile;
 exports.getFilePath = getFilePath;
 exports.getContentType = getContentType;
+exports.createResponse = createResponse;
