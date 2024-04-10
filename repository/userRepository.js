@@ -13,7 +13,9 @@ class UserRepository {
         `INSERT INTO users (user_id,name,username,email,password,isValidated) VALUES (null,'${name}' ,'${username}','${email}','${password}',false);`
       );
       console.log(rows);
-      isRegisterSuccess = true;
+      if (rows.affectedRows === 1) {
+        isRegisterSuccess = true;
+      }
     } catch (error) {
       console.log(error);
     }
@@ -21,56 +23,70 @@ class UserRepository {
     return isRegisterSuccess;
   };
 
-  setValidationTokenInDB = async (email, validationToken, pool) => {
+  setValidationTokenInDB = async (email, validationToken) => {
     try {
-      const [rows, fields] = await pool.query(
+      const [rows, fields] = await this.pool.query(
         `UPDATE users SET validationToken = '${validationToken}' WHERE email = '${email}';`
       );
       console.log(rows);
+      if (rows.changedRows !== 1) {
+        throw new Error("Could not set validation token in DB");
+      }
     } catch (error) {
       console.log(error);
+      throw error;
     }
   };
 
-  login = async (email, password, pool) => {
+  login = async (email, password, sessionToken) => {
     let isLoginSuccess = false;
 
     try {
-      const [rows, fields] = await pool.query(
-        `SELECT * FROM users WHERE email = '${email}' AND password = '${password}';`
+      const [rows, fields] = await this.pool.query(
+        `UPDATE users SET token = '${sessionToken}' WHERE email = '${email}' AND password = '${password}' AND user_id <> 0 ;`
       );
+
       console.log(rows);
-      if (rows.length === 1) {
+      if (rows.changedRows === 1) {
         isLoginSuccess = true;
       }
     } catch (error) {
-      log(error);
+      console.log(error);
+      isLoginSuccess = false;
     }
 
     return isLoginSuccess;
   };
 
-  setSessionTokenInDB = async (email, token, pool) => {
-    try {
-      const [rows, fields] = await pool.query(
-        `UPDATE users SET token = '${token}' WHERE email = '${email}';`
-      );
-      console.log(rows);
-      console.log("Updated token");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // setSessionTokenInDB = async (email, token, pool) => {
+  //   try {
+  //     const [rows, fields] = await pool.query(
+  //       `UPDATE users SET token = '${token}' WHERE email = '${email}';`
+  //     );
+  //     console.log(rows);
+  //     console.log("Updated token");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
-  tryVerifyEmail = async (validationToken, pool) => {
+  tryVerifyEmail = async (validationToken) => {
+    let isVerifyEmailSuccess = false;
+
     try {
-      const [rows, fields] = await pool.query(
+      const [rows, fields] = await this.pool.query(
         `UPDATE users SET isValidated = true WHERE validationToken = '${validationToken}';`
       );
+      if (rows.changedRows === 1) {
+        isVerifyEmailSuccess = true;
+      }
       console.log(rows);
     } catch (error) {
       console.log(error);
+      isVerifyEmailSuccess = false;
     }
+
+    return isVerifyEmailSuccess;
   };
 }
 
