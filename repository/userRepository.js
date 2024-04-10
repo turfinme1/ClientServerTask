@@ -58,18 +58,6 @@ class UserRepository {
     return isLoginSuccess;
   };
 
-  // setSessionTokenInDB = async (email, token, pool) => {
-  //   try {
-  //     const [rows, fields] = await pool.query(
-  //       `UPDATE users SET token = '${token}' WHERE email = '${email}';`
-  //     );
-  //     console.log(rows);
-  //     console.log("Updated token");
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
   tryVerifyEmail = async (validationToken) => {
     let isVerifyEmailSuccess = false;
 
@@ -77,7 +65,7 @@ class UserRepository {
       const [rows, fields] = await this.pool.query(
         `UPDATE users SET isValidated = true WHERE validationToken = '${validationToken}';`
       );
-      if (rows.changedRows === 1) {
+      if (rows.affectedRows === 1) {
         isVerifyEmailSuccess = true;
       }
       console.log(rows);
