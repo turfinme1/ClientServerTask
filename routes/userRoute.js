@@ -1,18 +1,32 @@
 const querystring = require("querystring");
+const url = require("url");
 
-const routes = ({ userService, serveFile, reqToQuery }) => ({
+const {
+  serverSideLoginValidation,
+  serverSideRegisterValidation,
+} = require("../util/dataValidation");
+const { createResponse } = require("../util/requestUtil");
+
+const routes = ({ userService, reqToQuery }) => ({
   "/register:post": async (req, res) => {
     const query = await reqToQuery(req);
     const { name, username, email, password } = querystring.parse(query);
 
-    if (serverSideRegisterValidation(name, username, email, password)) {
-      await registerHandler(name, username, email, password, pool);
-      serveFile(path.join(__dirname, "views", "index.html"), "text/html", res);
-    } else {
-      serveFile(
-        path.join(__dirname, "views", "register.html"),
-        "text/html",
-        res
+    if (
+      serverSideRegisterValidation(name, username, email, password) === false
+    ) {
+      return createResponse(res, 401, "Invalid input. Please try again.");
+    }
+
+    try {
+      await userService.register(name, username, email, password);
+      return createResponse(res, 201, "User registered successfully.");
+    } catch (error) {
+      console.log(error);
+      return createResponse(
+        res,
+        401,
+        "Could not register user. Please try again."
       );
     }
   },
@@ -21,35 +35,20 @@ const routes = ({ userService, serveFile, reqToQuery }) => ({
     const query = await reqToQuery(req);
     const { email, password } = querystring.parse(query);
 
-    if (serverSideLoginValidation(email, password)) {
-      const sessionToken = getToken();
+    if (serverSideLoginValidation(email, password) === false) {
+      return createResponse(res, 401, "Invalid input. Please try again.");
+    }
 
-      const isLoginSuccess = await loginHandler(
-        email,
-        password,
-        sessionToken,
-        pool
-      );
+    try {
+      const sessionToken = await userService.login(email, password);
 
-      if (isLoginSuccess) {
-        res.writeHead(200, {
-          "Content-Type": "application/json",
-        });
-
-        res.end(JSON.stringify({ sessionToken: sessionToken }));
-      } else {
-        res.writeHead(401, {
-          "Content-Type": "application/json",
-        });
-
-        res.end(
-          JSON.stringify({
-            message: "Invalid email or password",
-          })
-        );
-      }
-    } else {
-      serveFile(path.join(__dirname, "views", "login.html"), "text/html", res);
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+      });
+      return res.end(JSON.stringify({ sessionToken: sessionToken }));
+    } catch (error) {
+      console.log(error);
+      return createResponse(res, 401, "Invalid email or password.");
     }
   },
 
@@ -57,12 +56,18 @@ const routes = ({ userService, serveFile, reqToQuery }) => ({
     const { query } = url.parse(req.url);
     const { validationToken } = querystring.parse(query);
 
-    await tryVerifyEmail(validationToken, pool);
-
-    await serveFile(
-      path.join(__dirname, "views", "index.html"),
-      "text/html",
-      res
-    );
+    try {
+      await userService.verifyEmail(validationToken);
+      return createResponse(res, 200, "Email verified.");
+    } catch (error) {
+      console.log(error);
+      return createResponse(
+        res,
+        401,
+        "Could not verify email. Please try again."
+      );
+    }
   },
 });
+
+exports.routes = routes;
