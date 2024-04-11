@@ -41,6 +41,7 @@ describe("UserService", () => {
         expect.any(String)
       );
     });
+
     test("should not call setValidationToken and sendEmail when register fails", async () => {
       userService.userRepository.register.mockResolvedValue(false);
 
@@ -62,6 +63,7 @@ describe("UserService", () => {
       ).toHaveBeenCalledTimes(0);
       expect(userService.sendEmail).toHaveBeenCalledTimes(0);
     });
+
     test("should throw an error when repository throws an error", async () => {
       userService.userRepository.register.mockRejectedValue(
         new Error("Could not register user.")
@@ -142,6 +144,7 @@ describe("UserService", () => {
         validationToken
       );
     });
+
     test("should return true when email is verified", async () => {
       userService.userRepository.tryVerifyEmail.mockResolvedValue(true);
 
@@ -151,6 +154,7 @@ describe("UserService", () => {
 
       expect(result).toBe(true);
     });
+
     test("should throw an error when email verification fails", async () => {
       userService.userRepository.tryVerifyEmail.mockResolvedValue(false);
 
@@ -160,6 +164,7 @@ describe("UserService", () => {
         "Could not verify email."
       );
     });
+    
     test("should throw an error when repository throws an error", async () => {
       userService.userRepository.tryVerifyEmail.mockRejectedValue(
         new Error("Could not verify email.")
@@ -171,6 +176,5 @@ describe("UserService", () => {
         "Could not verify email."
       );
     });
-    // TODO: Write more test cases for other methods in UserService
   });
 });
