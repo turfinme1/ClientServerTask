@@ -56,6 +56,7 @@ class UserService {
       console.log(error);
       throw error;
     }
+    return true;
   };
 
   #getToken = () => {

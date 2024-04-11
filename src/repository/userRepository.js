@@ -36,6 +36,7 @@ class UserRepository {
       console.log(error);
       throw error;
     }
+    return true;
   };
 
   login = async (email, password, sessionToken) => {
