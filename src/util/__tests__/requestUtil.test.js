@@ -77,34 +77,40 @@ describe("requestUtil", () => {
 
       const result = getFilePath(contentType, reqUrl, extension);
 
-      expect(result).toMatch("\\src\\views\\index.html");
+      expect(result).toMatch(/(\\src\\views\\index.html|\/src\/views\/index\.html)/);
     });
     test("should return the path to the file with the given extension", () => {
       const contentType = "text/html";
       const reqUrl = "login";
       const extension = ".html";
+      const regexPattern = `(\\\\src\\\\views\\\\${reqUrl}|/src/views/${reqUrl})`;
+      const regex = new RegExp(regexPattern);
 
       const result = getFilePath(contentType, reqUrl, extension);
 
-      expect(result).toMatch(`\\src\\views\\${reqUrl}`);
+      expect(result).toMatch(regex);
     });
     test("should return a path for a file when content type is not text/html", () => {
       const contentType = "application/json";
       const reqUrl = "data";
       const extension = ".json";
+      const regexPattern = `(\\\\src\\\\${reqUrl}|/src/${reqUrl})`;
+      const regex = new RegExp(regexPattern);
 
       const result = getFilePath(contentType, reqUrl, extension);
 
-      expect(result).toMatch(`\\src\\${reqUrl}`);
+      expect(result).toMatch(regex);
     });
     test("should add .html extension to the file path if extension is empty", () => {
       const contentType = "text/html";
       const reqUrl = "about";
       const extension = "";
+      const regexPattern = `(\\\\src\\\\views\\\\${reqUrl}\\.html|\\/home\\/runner\\/work\\/ClientServerTask\\/ClientServerTask\\/src\\/views\\/${reqUrl}\\.html)`;
+      const regex = new RegExp(regexPattern);
 
       const result = getFilePath(contentType, reqUrl, extension);
 
-      expect(result).toMatch(`\\src\\views\\${reqUrl}.html`);
+      expect(result).toMatch(regex);
     });
   });
 
