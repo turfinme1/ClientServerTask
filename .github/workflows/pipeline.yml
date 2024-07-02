@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
@@ -21,3 +21,14 @@ jobs:
       run: npm install
     - name: Execute unit tests 
       run: npm run test
+  
+  deploy_to_render:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: JorgeLNJunior/render-deploy@v1.4.4
+        with:
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait_deploy: true
