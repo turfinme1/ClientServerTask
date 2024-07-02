@@ -41,6 +41,8 @@ Project is divided into 3 layers:
 - GET /confirm?validationToken=: Handles email verification. Verifies the user's email address based on the validation token.
 
 ## Unit tests
+1. Start the unit tests: `npm run test`.
+1. Create unit tests coverage: `npm test -- --coverage --collectCoverageFrom="./src/**"`.
 
 Unit tests created with Jest. There is a generated report in coverage folder. Tested files include:
 Unit tests have been created using Jest, and the tested files include` requestUtil.js`, `dataValidation.js`, `userRepository.js`, `userService.js`, `emailSenderService.js`, and `userRoute.js`. The coverage report for the unit tests can be found in the coverage folder.
